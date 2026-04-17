@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { usePOS } from "../context/POSContext";
 import type { PaymentMethod } from "../types/pos";
 import { supabase } from "../../lib/supabase";
+import { Receipt } from "./Receipt";
 
 interface PaymentModalProps {
   total: number;
@@ -30,6 +31,7 @@ export function PaymentModal({
   const [cashAmount, setCashAmount] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [orderId, setOrderId] = useState<string>("");
 
   const quickAmounts = [
     total,
@@ -56,7 +58,7 @@ export function PaymentModal({
       );
       const tax = Math.round(subtotal * 0.1);
 
-      const { error: orderError } = await supabase.rpc(
+      const { data, error: orderError } = await supabase.rpc(
         "create_order_transaction",
         {
           p_customer_name: customerName,
@@ -76,12 +78,9 @@ export function PaymentModal({
 
       if (orderError) throw orderError;
 
+      setOrderId(data || `TRX-${Date.now().toString().slice(-6)}`);
       setError(null);
       setShowSuccess(true);
-      setTimeout(() => {
-        clearCart();
-        onClose();
-      }, 2000);
     } catch (err) {
       console.error(err);
       setError("Terjadi kesalahan saat memproses pembayaran");
@@ -105,18 +104,62 @@ export function PaymentModal({
       >
         {showSuccess ? (
           <div className="text-center py-8">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", bounce: 0.5 }}
-              className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-5xl mx-auto mb-4"
-            >
-              ✅
-            </motion.div>
-            <h3 className="text-xl font-bold text-[#3E2723]">
-              Pembayaran Berhasil!
-            </h3>
-            <p className="text-[#8B5E3C] mt-2">Transaksi telah tercatat</p>
+            <div className="print:hidden">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", bounce: 0.5 }}
+                className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-5xl mx-auto mb-4"
+              >
+                ✅
+              </motion.div>
+              <h3 className="text-xl font-bold text-[#3E2723]">
+                Pembayaran Berhasil!
+              </h3>
+              <p className="text-[#8B5E3C] mt-2 mb-6">
+                Transaksi telah tercatat
+              </p>
+
+              <div className="flex gap-3 justify-center mt-6">
+                <button
+                  onClick={() => window.print()}
+                  className="px-6 py-3 bg-[#F5E6D3] text-[#6F4E37] rounded-xl font-bold hover:bg-[#E8D5C0] transition-colors flex items-center gap-2"
+                >
+                  <span className="text-xl">🖨️</span> Cetak Struk
+                </button>
+                <button
+                  onClick={() => {
+                    clearCart();
+                    onClose();
+                  }}
+                  className="px-6 py-3 bg-[#6F4E37] text-white rounded-xl font-bold hover:bg-[#5D4037] transition-colors"
+                >
+                  Selesai
+                </button>
+              </div>
+            </div>
+
+            <div className="hidden print:block print:fixed print:inset-0 print:bg-white print:z-[9999] print:p-4">
+              <Receipt
+                orderId={orderId}
+                date={new Date()}
+                customerName={customerName}
+                tableNumber={String(tableNumber)}
+                items={cart}
+                subtotal={cart.reduce(
+                  (sum, item) => sum + item.price * item.quantity,
+                  0,
+                )}
+                tax={Math.round(
+                  cart.reduce(
+                    (sum, item) => sum + item.price * item.quantity,
+                    0,
+                  ) * 0.1,
+                )}
+                total={total}
+                paymentMethod={paymentMethod}
+              />
+            </div>
           </div>
         ) : (
           <>
