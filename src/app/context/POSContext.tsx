@@ -1,13 +1,19 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
-import type { CartItem, MenuItem, ViewType } from '../types/pos';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
+import type { CartItem, MenuItem, ViewType } from "../types/pos";
 
 interface POSContextType {
   cart: CartItem[];
   currentView: ViewType;
   setCurrentView: (view: ViewType) => void;
   addToCart: (item: MenuItem) => void;
-  updateQuantity: (id: number, quantity: number) => void;
-  removeFromCart: (id: number) => void;
+  updateQuantity: (id: string | number, quantity: number) => void;
+  removeFromCart: (id: string | number) => void;
   clearCart: () => void;
 }
 
@@ -16,7 +22,7 @@ const POSContext = createContext<POSContextType | null>(null);
 export function usePOS(): POSContextType {
   const ctx = useContext(POSContext);
   if (!ctx) {
-    throw new Error('usePOS must be used within a POSProvider');
+    throw new Error("usePOS must be used within a POSProvider");
   }
   return ctx;
 }
@@ -26,7 +32,10 @@ interface POSProviderProps {
   initialView?: ViewType;
 }
 
-export function POSProvider({ children, initialView = 'dashboard' }: POSProviderProps) {
+export function POSProvider({
+  children,
+  initialView = "dashboard",
+}: POSProviderProps) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [currentView, setCurrentView] = useState<ViewType>(initialView);
 
@@ -35,22 +44,27 @@ export function POSProvider({ children, initialView = 'dashboard' }: POSProvider
       const existing = prev.find((i) => i.id === item.id);
       if (existing) {
         return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i,
         );
       }
       return [...prev, { ...item, quantity: 1 }];
     });
   }, []);
 
-  const updateQuantity = useCallback((id: number, quantity: number) => {
-    if (quantity <= 0) {
-      setCart((prev) => prev.filter((i) => i.id !== id));
-    } else {
-      setCart((prev) => prev.map((i) => (i.id === id ? { ...i, quantity } : i)));
-    }
-  }, []);
+  const updateQuantity = useCallback(
+    (id: string | number, quantity: number) => {
+      if (quantity <= 0) {
+        setCart((prev) => prev.filter((i) => i.id !== id));
+      } else {
+        setCart((prev) =>
+          prev.map((i) => (i.id === id ? { ...i, quantity } : i)),
+        );
+      }
+    },
+    [],
+  );
 
-  const removeFromCart = useCallback((id: number) => {
+  const removeFromCart = useCallback((id: string | number) => {
     setCart((prev) => prev.filter((i) => i.id !== id));
   }, []);
 
@@ -58,15 +72,18 @@ export function POSProvider({ children, initialView = 'dashboard' }: POSProvider
     setCart([]);
   }, []);
 
-  const value = useMemo(() => ({
-    cart,
-    currentView,
-    setCurrentView,
-    addToCart,
-    updateQuantity,
-    removeFromCart,
-    clearCart,
-  }), [cart, currentView, addToCart, updateQuantity, removeFromCart, clearCart]);
+  const value = useMemo(
+    () => ({
+      cart,
+      currentView,
+      setCurrentView,
+      addToCart,
+      updateQuantity,
+      removeFromCart,
+      clearCart,
+    }),
+    [cart, currentView, addToCart, updateQuantity, removeFromCart, clearCart],
+  );
 
   return <POSContext.Provider value={value}>{children}</POSContext.Provider>;
 }

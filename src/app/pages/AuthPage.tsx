@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from "react";
+import { motion } from "motion/react";
+import { useAuth } from "../context/AuthContext";
 
 export function AuthPage() {
   const { login } = useAuth();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -14,16 +14,16 @@ export function AuthPage() {
     setError(null);
 
     if (!username.trim() || !password.trim()) {
-      setError('Username dan password harus diisi');
+      setError("Username dan password harus diisi");
       return;
     }
 
     setLoading(true);
     // Simulate async
-    setTimeout(() => {
-      const result = login(username, password);
+    setTimeout(async () => {
+      const result = await login(username, password);
       if (!result.success) {
-        setError(result.error ?? 'Login gagal');
+        setError(result.error ?? "Login gagal");
       }
       setLoading(false);
     }, 500);
@@ -56,7 +56,9 @@ export function AuthPage() {
           )}
 
           <div>
-            <label className="text-sm text-[#8B5E3C] mb-1.5 block">Username</label>
+            <label className="text-sm text-[#8B5E3C] mb-1.5 block">
+              Username
+            </label>
             <input
               type="text"
               value={username}
@@ -67,7 +69,9 @@ export function AuthPage() {
           </div>
 
           <div>
-            <label className="text-sm text-[#8B5E3C] mb-1.5 block">Password</label>
+            <label className="text-sm text-[#8B5E3C] mb-1.5 block">
+              Password
+            </label>
             <input
               type="password"
               value={password}
@@ -84,12 +88,14 @@ export function AuthPage() {
             disabled={loading}
             className="w-full py-3 rounded-xl bg-[#6F4E37] text-white font-medium hover:bg-[#5D4037] transition-colors shadow-lg disabled:opacity-50"
           >
-            {loading ? 'Memproses...' : 'Masuk'}
+            {loading ? "Memproses..." : "Masuk"}
           </motion.button>
         </form>
 
         <div className="mt-6 p-4 bg-[#F5E6D3] rounded-xl">
-          <p className="text-xs text-[#8B5E3C] font-medium mb-2">Demo Credentials:</p>
+          <p className="text-xs text-[#8B5E3C] font-medium mb-2">
+            Demo Credentials:
+          </p>
           <div className="grid grid-cols-2 gap-2 text-xs text-[#6F4E37]">
             <div>
               <p className="font-medium">Barista</p>
